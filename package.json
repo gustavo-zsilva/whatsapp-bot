@@ -1,0 +1,18 @@
+{
+  "name": "whatsapp-bot",
+  "version": "1.0.0",
+  "description": "Whatsapp Bot",
+  "main": "index.js",
+  "repository": "git@github.com:gustavo-zsilva/whatsapp-bot.git",
+  "author": "Gustavo Zonta <gustavozontadasilva@gmail.com>",
+  "license": "MIT",
+  "private": false,
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "tsx": "^4.11.0",
+    "typescript": "^5.4.5"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts"
+  }
+}
