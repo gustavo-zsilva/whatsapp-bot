@@ -7,12 +7,26 @@ const client = new Client({ authStrategy: new LocalAuth(), webVersionCache: {
     type: 'remote',
 } });
 
-let menu = []
+type MenuItem = {
+    name: string,
+    price: number,
+}
+
+type OngoingChats = string[]
+
+let menu: MenuItem[] = []
+
+interface Orders {
+    [chatId: string]: {
+        name: string,
+        price: number,
+    }[]
+}
 
 async function getMenu() {
     try {
         const data = await fetch('https://vargas-barbearia.vercel.app/api')
-        const rawMenu = await data.json()
+        const rawMenu = await data.json() as string
         menu = JSON.parse(rawMenu)
         
     } catch (err) {
@@ -20,15 +34,8 @@ async function getMenu() {
     }
 }
 
-type Orders = {
-    chatId: {
-        name: string,
-        price: number,
-    }[]
-}
-
-const ongoingChats = []
-const orders: Orders | {} = {}
+const ongoingChats: OngoingChats = []
+const orders: Orders = {}
 
 function handleSendMenu(chatId: string) {
     // Fetch menu from an api
@@ -38,7 +45,7 @@ function handleSendMenu(chatId: string) {
     client.sendMessage(chatId, `${textMenu}\n Digite o número da opção desejada.`)
 }
 
-const messagesList = {
+const actionsList = {
     'menu': (chatId: string) => {
         handleSendMenu(chatId)
         return
@@ -66,9 +73,11 @@ client.on('message_create', (msg) => {
 
     console.log('Chat ID: ', msg.from);
     if (msg.fromMe) return;
-    
+
     // Filtering my phone numbers for testing purposes
-    if (msg.from !== process.env.PHONE_NUMBER_SELF && msg.from !== process.env.PHONE_NUMBER_OTHER) return
+    const whitelist = process.env.WHITELIST?.split(", ")
+    
+    if (!whitelist?.includes(msg.from)) return
     console.log('Orders: ', orders)
     console.log('ongoing chats: ', ongoingChats)
 
@@ -84,7 +93,8 @@ client.on('message_create', (msg) => {
         return
     }
 
-    Object.entries(messagesList).forEach(([key, value]) => {
+    // Handles other actions (cancel, menu, finish)
+    Object.entries(actionsList).forEach(([key, value]) => {
         const action = key
         const response = value
 
@@ -94,6 +104,7 @@ client.on('message_create', (msg) => {
         }
     })
 
+    // Handles menu options && order list
     if (Number(bodyMsg) > 0 && Number(bodyMsg) <= menu.length) {
         if (!orders[chatId]) {
             orders[chatId] = []
@@ -102,7 +113,7 @@ client.on('message_create', (msg) => {
         const selectedOption = menu[Number(bodyMsg)-1]
 
         if (orders[chatId].some(({ name }) => name === selectedOption.name)) {
-            client.sendMessage(msg.from, 'Esta opção já está na sua lista. Por favor, escolha outra opção ou digite \'_finalizar_\' para prosseguir com o pagamento.')
+            client.sendMessage(msg.from, 'Esta opção já está na sua lista. Por favor, escolha outra opção ou digite _\'finalizar\'_ para prosseguir com o pagamento.')
             return
         }
 
