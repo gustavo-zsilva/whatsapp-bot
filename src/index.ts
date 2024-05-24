@@ -7,6 +7,19 @@ const client = new Client({ authStrategy: new LocalAuth(), webVersionCache: {
     type: 'remote',
 } });
 
+let menu = []
+
+async function getMenu() {
+    try {
+        const data = await fetch('https://vargas-barbearia.vercel.app/api')
+        const rawMenu = await data.json()
+        menu = JSON.parse(rawMenu)
+        
+    } catch (err) {
+        console.error(err)
+    }
+}
+
 type Orders = {
     chatId: {
         name: string,
@@ -40,15 +53,6 @@ const messagesList = {
         ongoingChats.splice(ongoingChats.indexOf(chatId), 1)
     }
 }
-
-const menu = [
-    { name: 'Corte', price: 55 },
-    { name: 'Corte com Maquina', price: 35 },
-    { name: 'Degradê na Maquina ', price: 40 },
-    { name: 'Barba', price: 45 },
-    { name: 'Combo Barba e Cabelo ', price: 70 },
-];
-
 
 client.on('ready', () => {
     console.log('Client is ready!');
@@ -114,4 +118,5 @@ client.on('message_create', (msg) => {
     
 })
 
+getMenu()
 client.initialize();
