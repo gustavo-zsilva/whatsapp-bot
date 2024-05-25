@@ -34,6 +34,13 @@ async function getMenu() {
     }
 }
 
+async function getContactData(msg: Message) {
+    const contactData = await msg.getContact()
+    const shortname = contactData.shortName
+
+    return { shortname }
+}
+
 const ongoingChats: OngoingChats = []
 const orders: Orders = {}
 
@@ -69,7 +76,7 @@ client.on('qr', qr => {
     qrcode.generate(qr, {small: true});
 });
 
-client.on('message_create', (msg) => {
+client.on('message_create', async (msg) => {
 
     console.log('Chat ID: ', msg.from);
     if (msg.fromMe) return;
@@ -86,8 +93,11 @@ client.on('message_create', (msg) => {
 
     // Message shown to first-message users
     if (!ongoingChats.includes(chatId)) {
+        const contactData = await msg.getContact()
+        const shortname = contactData.pushname.split(' ')[0]
+
         ongoingChats.push(chatId)
-        client.sendMessage(chatId, 'Olá! Vejo que é sua primeira vez entrando em contato conosco! Vou te mandar o menu:')
+        client.sendMessage(chatId, `Olá, ${shortname}! Aqui é a atendente virtual da Barbearia Vargas. Vou te mandar o menu:`)
 
         handleSendMenu(chatId)
         return
